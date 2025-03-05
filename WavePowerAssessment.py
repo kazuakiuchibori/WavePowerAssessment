@@ -126,7 +126,7 @@ cbar.set_label('Mean water depth: h [m]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'Tide level: ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'Tide level: Æ’Â¢h = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig2_Mean_water_depth.png'
@@ -171,7 +171,7 @@ print(' Fluid properties')
 print(f"  rho= {rho:.2f} [kg/m^3]")
 print(f"  g  = {g:.2f} [m/s^2]")
 print(' Surface displacement')
-print(f"  ƒ¢h= {h_offset:.2f} [m] (input)")
+print(f"  Æ’Â¢h= {h_offset:.2f} [m] (input)")
 print(' Deep water waves')
 print(f"  L0 = {L0:.2f} [m] (input)")
 print(f"  h0 = {h0:.2f} [m]")
@@ -181,7 +181,7 @@ print(' Dispersion relation')
 print(f"  k0 = {k0:.2f} [1/m]")
 print(f"  c0 = {c0:.2f} [m/s]")
 print(f"  T  = {T:.2f} [s] (const)")
-print(f"  ƒÖ = {omega:.2f} [1/s]")
+print(f"  Æ’Ã– = {omega:.2f} [1/s]")
 print(' Wave energy')
 print(f"  E0 = {E0:.2f} [J/m]")
 print(f"  cg0= {cg0:.2f} [m/s]")
@@ -244,7 +244,7 @@ cbar.set_label('Phase velocity: c [m/s]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'L0 = {L0:.0f} [m], Æ’Â¢h = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig3_Phase_velocity.png'
@@ -278,7 +278,7 @@ cbar.set_label('Group velocity: cg [m/s]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'L0 = {L0:.0f} [m], Æ’Â¢h = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig4_Group_velocity.png'
@@ -312,7 +312,7 @@ cbar.set_label('Energy density: E [J/m]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], Æ’Â¢h = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig5_Energy_density.png'
@@ -385,7 +385,7 @@ for l in wavefronts:
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'Wavefronts  L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'Wavefronts  L0 = {L0:.0f} [m], Æ’Â¢h = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig6_Wavefronts.png'
@@ -453,7 +453,7 @@ plt.clabel(contour_lines, inline=0.1, fontsize=8, fmt='Hb%.0f')
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], Æ’Â¢h = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig7_Wave_height_and_breaking_height.png'
