@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import fsolve
+from scipy.integrate import quad, dblquad
 from matplotlib import rcParams
 
 
@@ -126,7 +127,7 @@ cbar.set_label('Mean water depth: h [m]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'Tide level: ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'Tide level: Δh = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig2_Mean_water_depth.png'
@@ -183,9 +184,9 @@ print(f"  c0 = {c0:.2f} [m/s]")
 print(f"  T  = {T:.2f} [s] (const)")
 print(f"  ω = {omega:.2f} [1/s]")
 print(' Wave energy')
-print(f"  E0 = {E0:.2f} [J/m]")
+print(f"  E0 = {E0:.2f} [J/m2]")
 print(f"  cg0= {cg0:.2f} [m/s]")
-print(f"  F  = {F:.2f} [W] (const)")
+print(f"  F  = {F:.2f} [W/m] (const)")
 
 
 
@@ -197,26 +198,32 @@ print(f"  F  = {F:.2f} [W] (const)")
 """
 print("Solving dispersion relation with the Newton-Raphson method....")
 
+k_grid = np.zeros_like(x_grid)
 c_grid = np.zeros_like(x_grid)
 cg_grid = np.zeros_like(x_grid)
-E_grid = np.zeros_like(x_grid)
 
 def dispersion_relation(k):
-    return omega**2 - g * k * np.tanh(k * hi)
+    return omega**2 - g * k * np.tanh(k * h)
 
 for i in range(x_grid.shape[0]):
     for j in range(x_grid.shape[1]):
-        hi = h_grid[i,j]
-        if hi < 1.0e-6:
-            hi = 1.0e-6
+
+        h = h_grid[i,j]
+
+        if h < 1.0e-6:
+            h = 1.0e-6
+
         k_initial_guess = omega**2 / g
         k_solution = fsolve(dispersion_relation, k_initial_guess)
-        k = k_solution[0]    
-        c = np.sqrt((g / k) * np.tanh(k * hi))
-        cg = c / 2.0 * (1.0 + 2.0 * k * hi / np.sinh(2.0 * k * hi))
+        k = k_solution[0]
+
+        c = np.sqrt((g / k) * np.tanh(k * h))
+
+        cg = c / 2.0 * (1.0 + 2.0 * k * h / np.sinh(2.0 * k * h))
+
+        k_grid[i,j] = k
         c_grid[i,j] = c
         cg_grid[i,j] = cg
-        E_grid[i,j] = F / cg
 
 
 print('Plot phase velocity field')
@@ -244,7 +251,7 @@ cbar.set_label('Phase velocity: c [m/s]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig3_Phase_velocity.png'
@@ -278,44 +285,10 @@ cbar.set_label('Group velocity: cg [m/s]', rotation=270, labelpad=15)
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
 output_file_path = 'Fig4_Group_velocity.png'
-plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
-
-plt.show()
-
-
-print('Plot energy density field')
-plt.figure()
-
-# Plot depth contour lines
-vmin = 0
-vmax = 45
-num_colors = int(vmax-vmin) + 1
-levels = np.linspace(vmin, vmax, num_colors)
-contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='dashed', colors='black', linewidths=0.5, alpha=0.25)
-num_colors = int((vmax-vmin)/5) + 1
-levels = np.linspace(vmin, vmax, num_colors)
-contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='solid', colors='black', linewidths=0.75, alpha=0.5)
-plt.clabel(contour_lines, inline=1, fontsize=10, fmt='%1.0f')
-
-# plot energy density: E [J/m]
-vmin = 0.0
-vmax = E0*2.0
-num_colors = 1001
-levels = np.linspace(vmin, vmax, num_colors)
-contour_filled = plt.contourf(x_grid, y_grid, E_grid, levels=levels, cmap='seismic')
-cbar = plt.colorbar(contour_filled)
-cbar.set_label('Energy density: E [J/m]', rotation=270, labelpad=15)
-
-plt.xlabel('x [m]')
-plt.ylabel('y [m]')
-plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
-plt.gca().set_aspect('equal', adjustable='box')
-
-output_file_path = 'Fig5_Energy_density.png'
 plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
 
 plt.show()
@@ -385,10 +358,10 @@ for l in wavefronts:
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'Wavefronts  L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'Wavefronts  L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
-output_file_path = 'Fig6_Wavefronts.png'
+output_file_path = 'Fig5_Wavefronts.png'
 plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
 
 plt.show()
@@ -398,10 +371,10 @@ plt.show()
 
 
 """
-    Breaking wave height with the wave breaking criteria
+    Breaking wave height and breaking height
 
 """
-print("Solving wave height & breaking height....")
+print("Solving wave height and breaking height....")
 
 H_grid = np.zeros_like(x_grid)
 Hb_grid = np.zeros_like(x_grid)
@@ -409,18 +382,22 @@ Hb_grid = np.zeros_like(x_grid)
 for i in range(x_grid.shape[0]):
     for j in range(x_grid.shape[1]):
 
-        cgi = cg_grid[i,j]
-        Ks = (cg0/cgi)**0.5
-        H_grid[i,j] = Ks * H0
+        cg = cg_grid[i,j]
+        Ks = (cg0/cg)**0.5
+        H = Ks * H0
 
-        hi = h_grid[i,j]
-        Li = c_grid[i,j] * T
-        Hb_grid[i,j] = 0.14 * np.tanh(2.0 * np.pi * hi / Li) * Li
+        h = h_grid[i,j]
+        L = c_grid[i,j] * T
+        Hb = 0.14 * np.tanh(2.0 * np.pi * h / L) * L
 
-        if(H_grid[i,j] > Hb_grid[i,j]):
-            H_grid[i,j] *= 0.5
+        if(H > Hb):
+            H *= 0.4
 
-print('Plot wave height field with breaking height')
+        H_grid[i,j] = H
+        Hb_grid[i,j] = Hb
+
+
+print('Plot wave height field with breaking height contour lines')
 plt.figure()
 
 # Plot depth contour lines
@@ -435,7 +412,7 @@ contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='s
 plt.clabel(contour_lines, inline=1, fontsize=10, fmt='%1.0f')
 
 # Plot wave height: H [m]
-vmin = H0 * 0.5
+vmin = H0 * 0.4
 vmax = H0 * 1.2
 num_colors = 1001
 levels = np.linspace(vmin, vmax, num_colors)
@@ -453,13 +430,194 @@ plt.clabel(contour_lines, inline=0.1, fontsize=8, fmt='Hb%.0f')
 
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
-plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], ƒ¢h = {h_offset} [m] {place}')
+plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
 plt.gca().set_aspect('equal', adjustable='box')
 
-output_file_path = 'Fig7_Wave_height_and_breaking_height.png'
+output_file_path = 'Fig6_Wave_height_and_breaking_height.png'
 plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
 
 plt.show()
+
+
+
+"""
+    Energy density
+
+"""
+print("Solving energy density...")
+
+E_grid = np.zeros_like(x_grid)
+
+for i in range(x_grid.shape[0]):
+    for j in range(x_grid.shape[1]):
+
+        H = H_grid[i,j]
+        E = rho * g * H**2 /8.0
+        E_grid[i,j] = E
+
+
+# plot energy density: E [J/m]
+print('Plot energy density field')
+plt.figure()
+
+# Plot depth contour lines
+vmin = 0
+vmax = 45
+num_colors = int(vmax-vmin) + 1
+levels = np.linspace(vmin, vmax, num_colors)
+contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='dashed', colors='black', linewidths=0.5, alpha=0.25)
+num_colors = int((vmax-vmin)/5) + 1
+levels = np.linspace(vmin, vmax, num_colors)
+contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='solid', colors='black', linewidths=0.75, alpha=0.5)
+plt.clabel(contour_lines, inline=1, fontsize=10, fmt='%1.0f')
+
+vmin = 0.0
+vmax = E0 * 2.0
+num_colors = 1001
+levels = np.linspace(vmin, vmax, num_colors)
+contour_filled = plt.contourf(x_grid, y_grid, E_grid, levels=levels, cmap='seismic')
+cbar = plt.colorbar(contour_filled)
+cbar.set_label('Energy density: E [J/m2]', rotation=270, labelpad=15)
+
+plt.xlabel('x [m]')
+plt.ylabel('y [m]')
+plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
+plt.gca().set_aspect('equal', adjustable='box')
+
+output_file_path = 'Fig7_Energy_density.png'
+plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
+
+plt.show()
+
+
+
+"""
+    Underwater flow velocity
+
+"""
+print("Solving depth averaged underwater flow velocity with the Gauss-Kronrod quadrature....")
+
+vx_grid = np.zeros_like(x_grid)
+
+time_avg_sin_abs = 2.0 / np.pi
+
+def integrand_abs_z(z, k, h):
+    return np.abs((H / 2.0) * (g * k / omega)  * np.cosh(k * (z + h)) / np.cosh(k * h))
+
+for i in range(x_grid.shape[0]):
+    for j in range(x_grid.shape[1]):
+
+        h = h_grid[i,j]
+        k = k_grid[i,j]
+        H = H_grid[i,j]
+
+        if h < 1.0e-6:
+            h = 1.0e-6
+
+        result, error = quad(integrand_abs_z, -h, 0.0, args=(k, h))
+
+        vx_grid[i,j] = result / h * time_avg_sin_abs
+
+
+print('Plot depth averaged underwater flow velocity field')
+plt.figure()
+
+# Plot depth contour lines
+vmin = 0
+vmax = 45
+num_colors = int(vmax-vmin) + 1
+levels = np.linspace(vmin, vmax, num_colors)
+contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='dashed', colors='black', linewidths=0.5, alpha=0.25)
+num_colors = int((vmax-vmin)/5) + 1
+levels = np.linspace(vmin, vmax, num_colors)
+contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='solid', colors='black', linewidths=0.75, alpha=0.5)
+plt.clabel(contour_lines, inline=1, fontsize=10, fmt='%1.0f')
+
+# Plot underwater velocity: vx [m/s]
+vmin = 0.0
+vmax = 1.5
+num_colors = 1001
+levels = np.linspace(vmin, vmax, num_colors)
+contour_filled = plt.contourf(x_grid, y_grid, vx_grid, levels=levels, cmap='rainbow')
+cbar = plt.colorbar(contour_filled)
+cbar.set_label('Depth averaged horizontal velocity: vx [m/s]', rotation=270, labelpad=15)
+
+plt.xlabel('x [m]')
+plt.ylabel('y [m]')
+plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
+plt.gca().set_aspect('equal', adjustable='box')
+
+output_file_path = 'Fig8_Horizontal_underwater_flow_velocity.png'
+plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
+
+plt.show()
+
+
+
+
+"""
+    Wave power
+
+"""
+print("Solving wave power with the Gauss-Kronrod quadrature....")
+
+P_grid = np.zeros_like(x_grid)
+
+time_avg_sin_abs_cube = 3.0 / (2.0 * np.pi)
+
+def integrand_abs_cube_z(z, k, h):
+    return np.abs((H / 2.0) * (g * k / omega) * np.cosh(k * (z + h)) / np.cosh(k * h))**3
+
+for i in range(x_grid.shape[0]):
+    for j in range(x_grid.shape[1]):
+
+        h = h_grid[i,j]
+        k = k_grid[i,j]
+        H = H_grid[i,j]
+
+        if h < 1.0e-6:
+            h = 1.0e-6
+
+        result, error = quad(integrand_abs_cube_z, -h, 0.0, args=(k, h))
+
+        P = (rho / 2.0) * result * time_avg_sin_abs_cube
+
+        P_grid[i,j] = P
+
+
+print('Plot wave power field')
+plt.figure()
+
+# Plot depth contour lines
+vmin = 0
+vmax = 45
+num_colors = int(vmax-vmin) + 1
+levels = np.linspace(vmin, vmax, num_colors)
+contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='dashed', colors='black', linewidths=0.5, alpha=0.25)
+num_colors = int((vmax-vmin)/5) + 1
+levels = np.linspace(vmin, vmax, num_colors)
+contour_lines = plt.contour(x_grid, y_grid, h_grid, levels=levels, linestyles='solid', colors='black', linewidths=0.75, alpha=0.5)
+plt.clabel(contour_lines, inline=1, fontsize=10, fmt='%1.0f')
+
+# Plot wave power: P [W]
+vmin = 0.0
+vmax = F / 4.0
+num_colors = 1001
+levels = np.linspace(vmin, vmax, num_colors)
+contour_filled = plt.contourf(x_grid, y_grid, P_grid, levels=levels, cmap='Spectral_r')
+cbar = plt.colorbar(contour_filled)
+cbar.set_label('Wave power: P [W/m]', rotation=270, labelpad=15)
+
+plt.xlabel('x [m]')
+plt.ylabel('y [m]')
+plt.title(f'H0 = {H0:.1f} [m], L0 = {L0:.0f} [m], Δh = {h_offset} [m] {place}')
+plt.gca().set_aspect('equal', adjustable='box')
+
+output_file_path = 'Fig9_Wave_power.png'
+plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
+
+plt.show()
+
 
 
 
